@@ -1,4 +1,4 @@
-//=====================================================================
+﻿//=====================================================================
 //
 // PyStand.cpp -
 //
@@ -80,7 +80,37 @@ std::wstring PyStand::Ansi2Unicode(const char *text)
 	return wide;
 }
 
+std::wstring PyStand::GetInstallPath()
+{
+	std::wstring installPath;
+    HKEY hKey;
+    // 尝试打开 HKEY_LOCAL_MACHINE 下 "Software\TaijiControl" 注册表项
+    LONG lResult = RegOpenKeyEx(HKEY_LOCAL_MACHINE, "Software\\TaijiControl", 0,
+                                KEY_READ | KEY_WOW64_32KEY, &hKey);
+    if (lResult != ERROR_SUCCESS) {
+        printf("打开注册表项失败，错误码: %ld\n", lResult);
+        return installPath;
+    }
 
+    char szInstallPath[256];
+    DWORD dwType = REG_SZ;
+    DWORD dwBufferSize = sizeof(szInstallPath);
+
+    // 读取 "InstallPath" 值
+    lResult = RegQueryValueEx(hKey, "InstallPath", NULL, &dwType, (LPBYTE)szInstallPath, &dwBufferSize);
+    if (lResult != ERROR_SUCCESS) {
+        printf("读取InstallPath值失败，错误码: %ld\n", lResult);
+        RegCloseKey(hKey);
+        return installPath;
+    }
+
+    printf("InstallPath: %s\n", szInstallPath);
+    installPath = Ansi2Unicode(szInstallPath);
+
+    // 关闭注册表项
+    RegCloseKey(hKey);
+    return installPath;
+}
 //---------------------------------------------------------------------
 // init: _args, _argv, _cwd, _pystand, _home, _runtime,
 //---------------------------------------------------------------------
@@ -126,24 +156,25 @@ bool PyStand::CheckEnviron(const wchar_t *rtp)
 	SetCurrentDirectoryW(_cwd.c_str());
 
 	// init: _runtime (embedded python directory)
-	bool abspath = false;
-	if (wcslen(rtp) >= 3) {
-		if (rtp[1] == L':') {
-			if (rtp[2] == L'/' || rtp[2] == L'\\')
-				abspath = true;
-		}
-	}
-	if (abspath == false) {
-		_runtime = _home + L"\\" + rtp;
-	}
-	else {
-		_runtime = rtp;
-	}
-	GetFullPathNameW(_runtime.c_str(), MAX_PATH + 1, path, NULL);
-	_runtime = path;
+	//bool abspath = false;
+	//if (wcslen(rtp) >= 3) {
+	//	if (rtp[1] == L':') {
+	//		if (rtp[2] == L'/' || rtp[2] == L'\\')
+	//			abspath = true;
+	//	}
+	//}
+	//if (abspath == false) {
+	//	_runtime = _home + L"\\" + rtp;
+	//}
+	//else {
+	//	_runtime = rtp;
+	//}
+	//GetFullPathNameW(_runtime.c_str(), MAX_PATH + 1, path, NULL);
+	//_runtime = path;
+    _runtime = GetInstallPath() + L"\\Python312";
 
 	// check home
-	std::wstring check = _runtime;
+    std::wstring check = _runtime;
 	if (!PathFileExistsW(check.c_str())) {
 		std::wstring msg = L"Missing embedded Python3 in:\n" + check;
 		MessageBoxW(NULL, msg.c_str(), L"ERROR", MB_OK);

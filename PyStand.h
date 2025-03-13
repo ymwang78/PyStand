@@ -37,7 +37,7 @@ public:
 protected:
 	bool CheckEnviron(const wchar_t *rtp);
 	bool LoadPython();
-
+	std::wstring GetInstallPath();
 
 protected:
 	typedef int (*t_Py_Main)(int argc, wchar_t **argv);
