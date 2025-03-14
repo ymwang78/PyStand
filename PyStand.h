@@ -1,4 +1,4 @@
-//=====================================================================
+﻿//=====================================================================
 //
 // PyStand.h - 
 //
@@ -37,6 +37,7 @@ public:
 protected:
 	bool CheckEnviron(const wchar_t *rtp);
 	bool LoadPython();
+    std::wstring GetPythonInstallPath();
 	std::wstring GetInstallPath();
 
 protected:
